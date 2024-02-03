@@ -1,4 +1,3 @@
-# Get the service resource
 import logging
 
 import boto3
@@ -6,38 +5,36 @@ from botocore.exceptions import ClientError
 
 from config import THINGS_REPORT_REQUEST_QUEUE
 
-log = logging.getLogger("service")
+log = logging.getLogger("things_report_request_service")
 
 
 class ThingsReportRequestService:
     def __init__(self):
-        self.running = True
+        self.sqs = boto3.resource("sqs", region_name="eu-west-2")
+        self.queue = self.sqs.Queue(f"{THINGS_REPORT_REQUEST_QUEUE}.fifo")
 
-    def stop(self):
-        self.running = False
+        log.info(f"queue {self.queue}")
 
-    def start(self):
-        log.info("**** running...")
-        sqs = boto3.resource('sqs', region_name="eu-west-2")
-        # Get the queue
-        queue = sqs.Queue(f"{THINGS_REPORT_REQUEST_QUEUE}.fifo")
-        log.info(f"**** queue {queue}")
+    def poll(self):
+        while True:
+            self.consume()
 
-        while self.running:
-            try:
-                messages = queue.receive_messages(
-                    MessageAttributeNames=["All"],
-                    MaxNumberOfMessages=10,
-                    WaitTimeSeconds=0,
-                )
-                log.info(f"**** messages {messages}")
+    def consume(self):
+        try:
+            messages = self.queue.receive_messages(
+                MessageAttributeNames=["All"],
+                MaxNumberOfMessages=10,
+                WaitTimeSeconds=5,
+            )
+            log.info(f"messages {messages}")
 
-                for msg in messages:
-                    log.info("Received message: %s: %s", msg.message_id, msg.body)
+            for msg in messages:
+                # log.info("Received message: %s: %s", msg.Id, msg.MessageBody)
+                log.info(f"Received message: {msg}")
+                # log.info(f"Received message: {msg}")
+                # Let the queue know that the message is processed
+                msg.delete()
 
-                    # Let the queue know that the message is processed
-                    # msg.delete()
-
-            except ClientError as error:
-                log.error("Couldn't receive messages from queue: %s", queue)
-                raise error
+        except ClientError as error:
+            log.error("Couldn't receive messages from queue: %s", self.queue)
+            raise error

@@ -9,7 +9,7 @@ def main() -> None:
     log.info("Starting service")
 
     service = ThingsReportRequestService()
-    service.start()
+    service.poll()
 
 
 if __name__ == "__main__":

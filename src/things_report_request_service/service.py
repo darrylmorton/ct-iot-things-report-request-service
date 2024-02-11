@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 import boto3
 from botocore.exceptions import ClientError
@@ -19,6 +20,9 @@ class ThingsReportRequestService:
         while True:
             self.consume()
 
+    def create_job(self, message: Any):
+        return False
+
     def consume(self):
         try:
             messages = self.queue.receive_messages(
@@ -30,8 +34,10 @@ class ThingsReportRequestService:
 
             for msg in messages:
                 # log.info("Received message: %s: %s", msg.Id, msg.MessageBody)
-                log.info(f"Received message: {msg}")
+                log.info(f"Received message: {msg.body}")
                 # log.info(f"Received message: {msg}")
+                message_body = msg.body
+
                 # Let the queue know that the message is processed
                 msg.delete()
 

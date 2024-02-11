@@ -23,8 +23,10 @@ def create_sqs_queue(queue_name: str):
     return queue
 
 
-def create_report_request_timestamp(iso_date: str) -> datetime:
-    return datetime.datetime.strptime(iso_date, "%Y-%m-%dT%H:%M:%S").timestamp()
+def create_report_request_timestamp(iso_date: str) -> str:
+    date = datetime.datetime.strptime(iso_date, "%Y-%m-%dT%H:%M:%S")
+
+    return date.isoformat()
 
 
 def create_timestamp(days: int = 0, before: bool = False) -> datetime:
@@ -50,12 +52,16 @@ def create_messages(total: int, offset=0):
     for counter in range(total):
         index = counter + offset
 
-        start_time_stamp = create_report_request_timestamp(f"20{year_delta}-01-01T00:00:00")
-        log.info(f"**** start_time_stamp {start_time_stamp}")
+        # , tz = datetime.timezone.utc
+        start_timestamp = create_report_request_timestamp(f"20{year_delta}-01-01T00:00:00")
+        # start_time_stamp = start_time_stamp.strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+        log.info(f"**** start_timestamp {start_timestamp}")
+        print(f"**** start_timestamp {start_timestamp}")
 
         year_delta = year_delta + 1
-        end_time_stamp = create_report_request_timestamp(f"20{year_delta}-01-01T00:00:00")
-        log.info(f"**** end_time_stamp {end_time_stamp}")
+        end_timestamp = create_report_request_timestamp(f"20{year_delta}-01-01T00:00:00")
+        # end_time_stamp = end_time_stamp.strftime('%Y-%m-%dT%H:%M:%S.%f%z')
+        log.info(f"**** end_timestamp {end_timestamp}")
 
         message_id = uuid.uuid4()
         log.info(f"**** message_id {message_id}")
@@ -80,19 +86,19 @@ def create_messages(total: int, offset=0):
                 },
                 "StartTimeStamp": {
                     "DataType": "String",
-                    "StringValue": start_time_stamp,
+                    "StringValue": start_timestamp,
                 },
                 "EndTimeStamp": {
                     "DataType": "String",
-                    "StringValue": end_time_stamp,
+                    "StringValue": end_timestamp,
                 }
             },
             "MessageBody": json.dumps({
                 "Id": str(message_id),
                 "UserId": str(user_id),
                 "ReportName": f"report_name_{index}",
-                "StartTimeStamp": start_time_stamp,
-                "EndTimeStamp": end_time_stamp,
+                "StartTimeStamp": start_timestamp,
+                "EndTimeStamp": end_timestamp,
             }),
             "MessageDeduplicationId": str(message_id),
         })

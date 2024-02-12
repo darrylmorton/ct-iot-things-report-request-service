@@ -6,7 +6,7 @@ load_dotenv()
 
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
-AWS_DEFAULT_REGION = "eu-west-1"  # os.environ.get("AWS_DEFAULT_REGION")
+AWS_DEFAULT_REGION = "eu-west-2"  # os.environ.get("AWS_DEFAULT_REGION")
 
 ENVIRONMENT = os.environ.get("ENVIRONMENT")
 LOG_LEVEL = os.environ.get("LOG_LEVEL")

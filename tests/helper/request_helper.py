@@ -8,6 +8,7 @@ from typing import Any
 import boto3
 
 from things_report_request_service.service import ThingsReportRequestService
+from util.service_util import create_report_request_timestamp, get_date_range_days, create_job_message
 
 log = logging.getLogger("service")
 
@@ -24,10 +25,6 @@ def create_sqs_queue(queue_name: str):
     return queue
 
 
-def create_report_request_timestamp(iso_date: str) -> datetime:
-    return datetime.datetime.strptime(iso_date, "%Y-%m-%dT%H:%M:%S")
-
-
 def create_timestamp(days: int = 0, before: bool = False) -> datetime:
     delta = datetime.timedelta(days=days)
     timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
@@ -41,10 +38,6 @@ def create_timestamp(days: int = 0, before: bool = False) -> datetime:
         log.info(f"**** create_timestamp - timestamp {timestamp + delta}")
 
         return timestamp + delta
-
-
-def get_date_range_days(start: datetime, end: datetime) -> str:
-    return f"{int((end - start).days)}"
 
 
 def create_messages(total: int, offset=0):
@@ -123,21 +116,88 @@ def create_messages(total: int, offset=0):
     return messages
 
 
+def expected_job_messages(messages: Any):
+    job_messages = []
+    # log.info(f"**** expected_job_messages len(messages) {len(messages)}")
+
+    # log.info(f"**** expected_job_messages messages {messages[0]['MessageBody']}")
+    log.info(f"**** **** expected_job_messages messages {messages}")
+
+    for message in messages:
+        log.info(f"**** **** create_job_message {message['MessageBody']}")
+
+        message_body = json.loads(message['MessageBody'])
+        log.info(f"**** **** create_job_message message_body {message_body}")
+
+        log.info(f"**** **** create_job_message {message_body['StartTimestamp']}")
+
+        start_timestamp_iso = message_body["StartTimestamp"]
+        start_timestamp = create_report_request_timestamp(start_timestamp_iso)
+        end_timestamp_iso = message_body["EndTimestamp"]
+        end_timestamp = create_report_request_timestamp(end_timestamp_iso)
+
+        date_range_days = get_date_range_days(start_timestamp, end_timestamp)
+        log.info(f"**** **** date_range_days {date_range_days}")
+
+        for index in range(int(date_range_days)):
+            log.info(f"**** **** index {index}")
+
+            date = create_report_request_timestamp(start_timestamp_iso)
+            log.info(f"**** **** date {date}")
+
+            datetime_delta = datetime.timedelta(days=index)
+            log.info(f"**** **** datetime_delta {datetime_delta}")
+
+            job_start_date = date.replace(hour=0, minute=0, second=0) + datetime_delta
+            job_end_date = date.replace(hour=23, minute=59, second=59) + datetime_delta
+
+            log.info(f"**** **** job_start_date {job_start_date}")
+            log.info(f"**** **** job_end_date {job_end_date}")
+
+            message_id = uuid.uuid4()
+            # log.info(f"**** message_id {message_id}")
+            archive_report = index < int(date_range_days) - 1
+
+            job_message = create_job_message(
+                message_id=str(message_id),
+                user_id=message_body["UserId"],
+                report_name=message_body["ReportName"],
+                start_timestamp=job_start_date.isoformat(),
+                end_timestamp=job_end_date.isoformat(),
+                job_index=str(index),
+                total_jobs=date_range_days,
+                archive_report=str(archive_report)
+            )
+
+            job_messages.append(job_message)
+
+            # message.delete()
+
+    return job_messages
+
+
 def service_poll(request_service: ThingsReportRequestService, timeout_seconds=0):
     timeout = time.time() + timeout_seconds
+    request_messages = []
 
     while True:
         if time.time() > timeout:
             log.info(f"Task timed out after {timeout_seconds}")
             break
+        else:
+            request_messages = request_messages + request_service.consume()
+            # result = request_service.produce(request_messages)
+            # log.info(f"**** service_poll result {result}")
 
-        request_service.consume()
+    return request_messages
 
 
-def service_consume(report_job_queue: Any, timeout_seconds=0):
-    log.info(f"**** service_consume called...")
+def report_jobs_consumer(report_job_queue: Any, total_jobs: int, timeout_seconds=0):
+    log.info(f"**** report_jobs_consumer called...")
 
     timeout = time.time() + timeout_seconds
+    messages = []
+    # index = 0
 
     while True:
         if time.time() > timeout:
@@ -149,9 +209,32 @@ def service_consume(report_job_queue: Any, timeout_seconds=0):
             MaxNumberOfMessages=10,
             WaitTimeSeconds=5,
         )
-        log.info(f"len(job_messages( {len(job_messages)}")
+        log.info(f"**** report_jobs_consumer job_messages {len(job_messages)}")
 
-        # for job_messages in job_messages:
-        #     message_body = json.loads(job_messages.body)
-        #     # log.info(f"job_messages {job_messages}")
-        #     log.info(f"job_message_body {message_body}")
+        messages = messages + job_messages
+        # index = index + 1
+
+    return messages
+
+
+def assert_request_messages(actual_result: Any, expected_result: Any):
+    assert len(actual_result) == len(expected_result)
+    index = 0
+
+    for request_message in actual_result:
+        assert request_message.body == expected_result[index]["MessageBody"]
+        index = index + 1
+
+
+def assert_job_messages(actual_result: Any, expected_result: Any):
+    log.info(f"**** assert_job_messages len(actual_result): {len(actual_result)}")
+    log.info(f"**** assert_job_messages len(expected_result): {len(expected_result)}")
+
+    assert len(actual_result) == len(expected_result)
+    index = 0
+    job_message_body = json.loads(actual_result.body["MessageBody"])
+
+    for job_message in actual_result:
+        assert job_message_body == expected_result[index]["MessageBody"]
+        index = index + 1
+        job_message.delete()

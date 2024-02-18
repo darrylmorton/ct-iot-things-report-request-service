@@ -1,12 +1,11 @@
-import json
 import logging
-import uuid
+from typing import Any
 
 import boto3
 from botocore.exceptions import ClientError
 
 from config import THINGS_REPORT_REQUEST_QUEUE, THINGS_REPORT_JOB_QUEUE
-from util.service_util import create_job_message
+from util.service_util import create_job_messages
 
 log = logging.getLogger("things_report_request_service")
 
@@ -22,9 +21,12 @@ class ThingsReportRequestService:
 
     def poll(self):
         while True:
-            self.consume()
+            request_messages = self.consume()
 
-    def consume(self):
+            if len(request_messages) > 0:
+                self.produce(request_messages)
+
+    def consume(self) -> Any:
         try:
             request_messages = self.report_request_queue.receive_messages(
                 MessageAttributeNames=["All"],
@@ -36,57 +38,42 @@ class ThingsReportRequestService:
             total_messages = len(request_messages)
             log.info(f"**** total_messages {total_messages}")
 
-            # if total_messages > 0:
-            #     create_job_messages(request_messages, total_messages)
+            result = self.produce(request_messages)
+            log.info(f"**** service produce result {result}")
 
-            job_messages = []
-            total_jobs = total_messages + 1
-            index = 0
+            return request_messages
+        except ClientError as error:
+            log.error("Couldn't receive messages from queue: %s", self.report_request_queue)
+            raise error
 
-            for request_message in request_messages:
-                log.info(f"Received request_message: {request_message}")
+    def produce(self, request_messages: Any):
+        log.info(f"**** produce request_messages {request_messages}")
 
-                message_id = uuid.uuid4()
-                message_compressor = index < total_messages - 1
-                request_message_body = json.loads(request_message.body)
-                log.info(f"Received request_message_body: {request_message_body}")
+        try:
+            job_messages = create_job_messages(request_messages)
+            # log.info(f"**** produce len(job_messages) {len(job_messages)}")
 
-                job_message = create_job_message(
-                    message_id=str(message_id),
-                    user_id=request_message_body["UserId"],
-                    report_name=request_message_body["ReportName"],
-                    start_timestamp=request_message_body["StartTimestamp"],
-                    end_timestamp=request_message_body["EndTimestamp"],
-                    job_index=str(index),
-                    total_jobs=str(total_jobs),
-                    message_compressor=str(message_compressor)
-                )
+            total_messages = len(job_messages)
+            log.info(f"**** produce total_messages {total_messages}")
 
-                if message_compressor:
-                    job_message = create_job_message(
-                        message_id=str(message_id),
-                        user_id=request_message_body["UserId"],
-                        report_name=request_message_body["ReportName"],
-                        start_timestamp=request_message_body["StartTimestamp"],
-                        end_timestamp=request_message_body["EndTimestamp"],
-                        job_index=str(index + 1),
-                        total_jobs=str(total_jobs),
-                        message_compressor=str(message_compressor)
-                    )
+            # log.info(f"**** job_messages: {job_messages}")
+            # log.info(f"**** len(job_messages): {len(job_messages)}")
 
-                # Let the queue know that the message is processed
-                request_message.delete()
+            if len(job_messages) > 0:
+                messages = []
+                index = 1
 
-                job_messages.append(job_message)
+                for message in job_messages:
+                    if index == 10:
+                        self.report_job_queue.send_messages(Entries=job_messages)
+                        index = 1
 
-                index = index + 1
+                    messages.append(message)
+                    # log.info(f"**** produce job_messages {job_messages}")
 
-            log.info(f"**** job_messages: {job_messages}")
-            log.info(f"**** len(job_messages): {len(job_messages)}")
+                    # log.info(f"**** produce job_messages {job_messages}")
 
-            if total_messages > 0:
-                self.report_job_queue.send_messages(Entries=job_messages)
-
+            return job_messages
         except ClientError as error:
             log.error("Couldn't receive messages from queue: %s", self.report_request_queue)
             raise error

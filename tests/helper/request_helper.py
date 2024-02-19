@@ -121,15 +121,15 @@ def expected_job_messages(messages: Any):
     # log.info(f"**** expected_job_messages len(messages) {len(messages)}")
 
     # log.info(f"**** expected_job_messages messages {messages[0]['MessageBody']}")
-    log.info(f"**** **** expected_job_messages messages {messages}")
+    # log.info(f"**** **** expected_job_messages messages {messages}")
 
     for message in messages:
-        log.info(f"**** **** create_job_message {message['MessageBody']}")
+        # log.info(f"**** **** create_job_message {message['MessageBody']}")
 
         message_body = json.loads(message['MessageBody'])
-        log.info(f"**** **** create_job_message message_body {message_body}")
+        # log.info(f"**** **** create_job_message message_body {message_body}")
 
-        log.info(f"**** **** create_job_message {message_body['StartTimestamp']}")
+        # log.info(f"**** **** create_job_message {message_body['StartTimestamp']}")
 
         start_timestamp_iso = message_body["StartTimestamp"]
         start_timestamp = create_report_request_timestamp(start_timestamp_iso)
@@ -143,7 +143,7 @@ def expected_job_messages(messages: Any):
             log.info(f"**** **** index {index}")
 
             date = create_report_request_timestamp(start_timestamp_iso)
-            log.info(f"**** **** date {date}")
+            # log.info(f"**** **** date {date}")
 
             datetime_delta = datetime.timedelta(days=index)
             log.info(f"**** **** datetime_delta {datetime_delta}")
@@ -151,8 +151,8 @@ def expected_job_messages(messages: Any):
             job_start_date = date.replace(hour=0, minute=0, second=0) + datetime_delta
             job_end_date = date.replace(hour=23, minute=59, second=59) + datetime_delta
 
-            log.info(f"**** **** job_start_date {job_start_date}")
-            log.info(f"**** **** job_end_date {job_end_date}")
+            # log.info(f"**** **** job_start_date {job_start_date}")
+            # log.info(f"**** **** job_end_date {job_end_date}")
 
             message_id = uuid.uuid4()
             # log.info(f"**** message_id {message_id}")
@@ -185,19 +185,21 @@ def service_poll(request_service: ThingsReportRequestService, timeout_seconds=0)
             log.info(f"Task timed out after {timeout_seconds}")
             break
         else:
-            request_messages = request_messages + request_service.consume()
+            # request_messages = request_messages + request_service.consume()
+            request_service.consume()
             # result = request_service.produce(request_messages)
             # log.info(f"**** service_poll result {result}")
+    # log.info(f"**** SERVICE POLL request_messages {request_messages}")
+    # log.info(f"**** SERVICE POLL len(request_messages) {len(request_messages)}")
 
-    return request_messages
+    # return request_messages
 
 
-def report_jobs_consumer(report_job_queue: Any, total_jobs: int, timeout_seconds=0):
+def report_jobs_consumer(report_job_queue: Any, timeout_seconds=0) -> Any:
     log.info(f"**** report_jobs_consumer called...")
 
     timeout = time.time() + timeout_seconds
     messages = []
-    # index = 0
 
     while True:
         if time.time() > timeout:
@@ -211,8 +213,10 @@ def report_jobs_consumer(report_job_queue: Any, total_jobs: int, timeout_seconds
         )
         log.info(f"**** report_jobs_consumer job_messages {len(job_messages)}")
 
-        messages = messages + job_messages
-        # index = index + 1
+        for job_message in job_messages:
+            messages.append(job_message)
+
+            job_message.delete()
 
     return messages
 
@@ -230,11 +234,15 @@ def assert_job_messages(actual_result: Any, expected_result: Any):
     log.info(f"**** assert_job_messages len(actual_result): {len(actual_result)}")
     log.info(f"**** assert_job_messages len(expected_result): {len(expected_result)}")
 
-    assert len(actual_result) == len(expected_result)
+    assert len(actual_result) == len(expected_result) + 1
     index = 0
-    job_message_body = json.loads(actual_result.body["MessageBody"])
 
     for job_message in actual_result:
-        assert job_message_body == expected_result[index]["MessageBody"]
+        job_message_body = json.loads(job_message.body)
+
+        if index < len(actual_result) - 1:
+            assert job_message_body == expected_result[index]["MessageBody"]
+        else:
+            assert job_message_body["ArchiveReport"] == "True"
+
         index = index + 1
-        job_message.delete()

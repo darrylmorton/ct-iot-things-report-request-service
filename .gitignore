@@ -5,3 +5,4 @@ venv/
 .coverage
 **/__pycache__
 .env
+htmlcov/

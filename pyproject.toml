@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "things_report_request_service"
+version = "0.0.1"
+description = "things_report_request_service"
+authors = ["Darryl Morton"]
+license = "GNU"
+readme = "README.md"
+repository = "https://github.com/darrylmorton/ct-iot-things-report-request-service.git"
+keywords = ["ct", "iot", "things", "report", "request", "service"]
+packages = [{ include = "things_report_request_service", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.12.0"
+boto3 = "^1.34.23"
+python-dotenv = "^1.0.0"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.4"
+pytest-cov = "^4.1.0"
+pytest-asyncio = "^0.23.3"
+
+[tool.poetry.group.dev.dependencies]
+moto = "^4.2.13"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+addopts = "--cov --cov-config=./tests/pytest-cov.ini --cov-report term-missing --cov-report=html"

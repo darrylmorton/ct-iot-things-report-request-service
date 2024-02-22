@@ -186,6 +186,7 @@ def validate_uuid4(uuid_string):
 
     try:
         val = uuid.UUID(uuid_string, version=4)
+
     except ValueError:
         # If it's a value error, then the string
         # is not a valid hex code for a UUID.
@@ -196,7 +197,7 @@ def validate_uuid4(uuid_string):
     # the UUID.__init__ will convert it to a
     # valid uuid4. This is bad for validation purposes.
 
-    return val.hex == uuid_string
+    return str(val) == uuid_string
 
 
 def assert_request_messages(actual_result: Any, expected_result: Any):
@@ -209,9 +210,8 @@ def assert_request_messages(actual_result: Any, expected_result: Any):
 
 
 def assert_job_message(actual_result: Any, expected_result: Any):
-    # assert validate_uuid4(actual_result["Id"])
-    # assert validate_uuid4(expected_result["Id"])
-
+    assert validate_uuid4(actual_result["Id"])
+    assert validate_uuid4(expected_result["Id"])
     assert actual_result["Id"] != expected_result["Id"]
 
     assert actual_result["UserId"] == expected_result["UserId"]

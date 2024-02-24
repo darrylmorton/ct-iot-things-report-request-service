@@ -2,10 +2,10 @@ import datetime
 import json
 import logging
 
-log = logging.getLogger("service")
+log = logging.getLogger("things_report_request_service")
 
 
-def create_report_request_timestamp(iso_date: str) -> datetime:
+def create_report_timestamp(iso_date: str) -> datetime:
     return datetime.datetime.strptime(iso_date, "%Y-%m-%dT%H:%M:%S")
 
 

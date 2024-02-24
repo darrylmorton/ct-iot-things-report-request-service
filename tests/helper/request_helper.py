@@ -19,7 +19,7 @@ def create_sqs_queue(queue_name: str):
 
     queue = sqs.create_queue(
         QueueName=f"{queue_name}.fifo",
-        Attributes={'DelaySeconds': '5'}
+        Attributes={"DelaySeconds": "5"}
     )
 
     return queue
@@ -103,7 +103,7 @@ def expected_job_messages(messages: Any):
     job_messages = []
 
     for message in messages:
-        message_body = json.loads(message['MessageBody'])
+        message_body = json.loads(message["MessageBody"])
 
         start_timestamp_iso = message_body["StartTimestamp"]
         start_timestamp = create_report_timestamp(start_timestamp_iso)

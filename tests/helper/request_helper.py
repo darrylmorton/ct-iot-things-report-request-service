@@ -7,18 +7,19 @@ from typing import Any
 
 import boto3
 
+from config import AWS_DEFAULT_REGION
 from things_report_request_service.service import ThingsReportRequestService
-from util.service_util import create_report_request_timestamp, get_date_range_days, create_job_message
+from util.service_util import create_report_timestamp, get_date_range_days, create_job_message
 
-log = logging.getLogger("service")
+log = logging.getLogger("test_things_report_request_service")
 
 
 def create_sqs_queue(queue_name: str):
-    sqs = boto3.resource("sqs", region_name="eu-west-2")
+    sqs = boto3.resource("sqs", region_name=AWS_DEFAULT_REGION)
 
     queue = sqs.create_queue(
         QueueName=f"{queue_name}.fifo",
-        Attributes={'DelaySeconds': '5'}
+        Attributes={"DelaySeconds": "5"}
     )
 
     return queue
@@ -34,7 +35,7 @@ def create_timestamp(days: int = 0, before: bool = False) -> datetime:
         return timestamp + delta
 
 
-def create_messages(total: int, offset=0):
+def create_job_messages(total: int, offset=0):
     messages = []
     year_delta = 10
 
@@ -42,12 +43,12 @@ def create_messages(total: int, offset=0):
         index = counter + offset
 
         start_timestamp_isoformat = f"20{year_delta}-01-01T00:00:00"
-        start_timestamp = create_report_request_timestamp(start_timestamp_isoformat)
+        start_timestamp = create_report_timestamp(start_timestamp_isoformat)
 
         year_delta = year_delta + 1
         end_timestamp_isoformat = f"20{year_delta}-01-01T00:00:00"
 
-        end_timestamp = create_report_request_timestamp(end_timestamp_isoformat)
+        end_timestamp = create_report_timestamp(end_timestamp_isoformat)
 
         date_range_days = get_date_range_days(start_timestamp, end_timestamp)
 
@@ -102,18 +103,18 @@ def expected_job_messages(messages: Any):
     job_messages = []
 
     for message in messages:
-        message_body = json.loads(message['MessageBody'])
+        message_body = json.loads(message["MessageBody"])
 
         start_timestamp_iso = message_body["StartTimestamp"]
-        start_timestamp = create_report_request_timestamp(start_timestamp_iso)
+        start_timestamp = create_report_timestamp(start_timestamp_iso)
         end_timestamp_iso = message_body["EndTimestamp"]
-        end_timestamp = create_report_request_timestamp(end_timestamp_iso)
+        end_timestamp = create_report_timestamp(end_timestamp_iso)
 
         date_range_days = get_date_range_days(start_timestamp, end_timestamp)
         total_jobs = date_range_days + 1
 
         for index in range(total_jobs):
-            date = create_report_request_timestamp(start_timestamp_iso)
+            date = create_report_timestamp(start_timestamp_iso)
 
             datetime_delta = datetime.timedelta(days=index)
 

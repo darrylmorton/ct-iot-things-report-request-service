@@ -7,10 +7,10 @@ from typing import Any
 import boto3
 from botocore.exceptions import ClientError
 
-from config import THINGS_REPORT_REQUEST_QUEUE, THINGS_REPORT_JOB_QUEUE
+from config import THINGS_REPORT_REQUEST_QUEUE, THINGS_REPORT_JOB_QUEUE, AWS_DEFAULT_REGION
 from util.service_util import (
     get_date_range_days,
-    create_report_request_timestamp,
+    create_report_timestamp,
     create_job_message
 )
 
@@ -19,7 +19,7 @@ log = logging.getLogger("things_report_request_service")
 
 class ThingsReportRequestService:
     def __init__(self):
-        self.sqs = boto3.resource("sqs", region_name="eu-west-2")
+        self.sqs = boto3.resource("sqs", region_name=AWS_DEFAULT_REGION)
         self.report_request_queue = self.sqs.Queue(f"{THINGS_REPORT_REQUEST_QUEUE}.fifo")
         self.report_job_queue = self.sqs.Queue(f"{THINGS_REPORT_JOB_QUEUE}.fifo")
 
@@ -42,9 +42,9 @@ class ThingsReportRequestService:
                     message_body = json.loads(request_message.body)
 
                     start_timestamp_iso = message_body["StartTimestamp"]
-                    start_timestamp = create_report_request_timestamp(start_timestamp_iso)
+                    start_timestamp = create_report_timestamp(start_timestamp_iso)
                     end_timestamp_iso = message_body["EndTimestamp"]
-                    end_timestamp = create_report_request_timestamp(end_timestamp_iso)
+                    end_timestamp = create_report_timestamp(end_timestamp_iso)
 
                     date_range_days = get_date_range_days(start_timestamp, end_timestamp)
                     total_jobs = date_range_days + 1
@@ -52,7 +52,7 @@ class ThingsReportRequestService:
                     date_range_days_countdown = total_jobs
                     counter = 1
                     for index in range(total_jobs):
-                        date = create_report_request_timestamp(start_timestamp_iso)
+                        date = create_report_timestamp(start_timestamp_iso)
 
                         datetime_delta = datetime.timedelta(days=index)
 

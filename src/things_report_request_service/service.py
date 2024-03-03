@@ -7,7 +7,7 @@ from typing import Any
 import boto3
 from botocore.exceptions import ClientError
 
-from config import THINGS_REPORT_REQUEST_QUEUE, THINGS_REPORT_JOB_QUEUE, AWS_DEFAULT_REGION
+from config import THINGS_REPORT_REQUEST_QUEUE, THINGS_REPORT_JOB_QUEUE, AWS_DEFAULT_REGION, THINGS_REPORT_REQUEST_DLQ
 from util.service_util import (
     get_date_range_days,
     create_report_timestamp,
@@ -21,6 +21,7 @@ class ThingsReportRequestService:
     def __init__(self):
         self.sqs = boto3.resource("sqs", region_name=AWS_DEFAULT_REGION)
         self.report_request_queue = self.sqs.Queue(f"{THINGS_REPORT_REQUEST_QUEUE}.fifo")
+        self.report_request_dlq = self.sqs.Queue(f"{THINGS_REPORT_REQUEST_DLQ}.fifo")
         self.report_job_queue = self.sqs.Queue(f"{THINGS_REPORT_JOB_QUEUE}.fifo")
 
     def poll(self):
@@ -85,10 +86,8 @@ class ThingsReportRequestService:
                         counter = counter + 1
                         date_range_days_countdown = date_range_days_countdown - 1
 
-                        request_message.delete()
         except ClientError as error:
-            log.error(f"Couldn't receive report_request_queue messages error {error}")
-
+            log.error(f"Couldn't receive report_request_queue messages client error {error}")
             raise error
 
     def produce(self, job_messages: Any) -> Any:

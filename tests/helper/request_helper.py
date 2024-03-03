@@ -14,15 +14,34 @@ from util.service_util import create_report_timestamp, get_date_range_days, crea
 log = logging.getLogger("test_things_report_request_service")
 
 
-def create_sqs_queue(queue_name: str):
+def create_sqs_queue(queue_name: str, dlq_name=""):
+    log.info(f"create_sqs_queue - dlq_name {dlq_name}")
+
     sqs = boto3.resource("sqs", region_name=AWS_DEFAULT_REGION)
+    queue_attributes = {
+        "DelaySeconds": "5",
+    }
+    dlq = None
+
+    if dlq_name:
+        dlq = sqs.create_queue(
+            QueueName=f"{dlq_name}.fifo",
+            Attributes=queue_attributes
+        )
+
+        dlq_policy = json.dumps({
+            "deadLetterTargetArn": dlq.attributes["QueueArn"],
+            "maxReceiveCount": "10"
+        })
+
+        queue_attributes["RedrivePolicy"] = dlq_policy
 
     queue = sqs.create_queue(
         QueueName=f"{queue_name}.fifo",
-        Attributes={"DelaySeconds": "5"}
+        Attributes=queue_attributes
     )
 
-    return queue
+    return queue, dlq
 
 
 def create_timestamp(days: int = 0, before: bool = False) -> datetime:
@@ -35,7 +54,80 @@ def create_timestamp(days: int = 0, before: bool = False) -> datetime:
         return timestamp + delta
 
 
-def create_job_messages(total: int, offset=0):
+def report_request_dlq_consumer(report_request_dlq: Any, timeout_seconds=0) -> Any:
+    timeout = time.time() + timeout_seconds
+    messages = []
+
+    while True:
+        if time.time() > timeout:
+            log.info(f"Task timed out after {timeout_seconds}")
+            break
+
+        log.info(f"report_request_dlq: {report_request_dlq}")
+
+        messages = report_request_dlq.receive_messages(
+            MessageAttributeNames=["All"],
+            MaxNumberOfMessages=10,
+            WaitTimeSeconds=5,
+        )
+
+        for message in messages:
+            messages.append(message)
+
+            message.delete()
+
+    return messages
+
+
+def create_request_message(
+        message_id: str,
+        user_id: str,
+        report_name: str,
+        start_timestamp: str,
+        end_timestamp: str,
+        date_range_days: str
+):
+    return {
+        "Id": message_id,
+        "MessageAttributes": {
+            "Id": {
+                "DataType": "String",
+                "StringValue": message_id,
+            },
+            "UserId": {
+                "DataType": "String",
+                "StringValue": user_id,
+            },
+            "ReportName": {
+                "DataType": "String",
+                "StringValue": report_name,
+            },
+            "StartTimestamp": {
+                "DataType": "String",
+                "StringValue": start_timestamp,
+            },
+            "EndTimestamp": {
+                "DataType": "String",
+                "StringValue": end_timestamp,
+            },
+            "DateRangeDays": {
+                "DataType": "String",
+                "StringValue": date_range_days,
+            }
+        },
+        "MessageBody": json.dumps({
+            "Id": message_id,
+            "UserId": user_id,
+            "ReportName": report_name,
+            "StartTimestamp": start_timestamp,
+            "EndTimestamp": end_timestamp,
+            "DateRangeDays": date_range_days,
+        }),
+        "MessageDeduplicationId": message_id,
+    }
+
+
+def create_request_messages(total: int, offset=0):
     messages = []
     year_delta = 10
 
@@ -55,44 +147,15 @@ def create_job_messages(total: int, offset=0):
         message_id = uuid.uuid4()
         user_id = uuid.uuid4()
 
-        messages.append({
-            "Id": str(message_id),
-            "MessageAttributes": {
-                "Id": {
-                    "DataType": "String",
-                    "StringValue": str(message_id),
-                },
-                "UserId": {
-                    "DataType": "String",
-                    "StringValue": str(user_id),
-                },
-                "ReportName": {
-                    "DataType": "String",
-                    "StringValue": f"report_name_{index}",
-                },
-                "StartTimestamp": {
-                    "DataType": "String",
-                    "StringValue": start_timestamp_isoformat,
-                },
-                "EndTimestamp": {
-                    "DataType": "String",
-                    "StringValue": end_timestamp_isoformat,
-                },
-                "DateRangeDays": {
-                    "DataType": "String",
-                    "StringValue": str(date_range_days),
-                }
-            },
-            "MessageBody": json.dumps({
-                "Id": str(message_id),
-                "UserId": str(user_id),
-                "ReportName": f"report_name_{index}",
-                "StartTimestamp": start_timestamp_isoformat,
-                "EndTimestamp": end_timestamp_isoformat,
-                "DateRangeDays": str(date_range_days),
-            }),
-            "MessageDeduplicationId": str(message_id),
-        })
+        request_message = create_request_message(
+            message_id=str(message_id),
+            user_id=str(user_id),
+            report_name=f"report_name_{index}",
+            start_timestamp=start_timestamp_isoformat,
+            end_timestamp=end_timestamp_isoformat,
+            date_range_days=str(date_range_days)
+        )
+        messages.append(request_message)
 
         year_delta = year_delta + 1
 

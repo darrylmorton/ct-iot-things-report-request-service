@@ -82,12 +82,12 @@ def report_request_dlq_consumer(report_request_dlq: Any, timeout_seconds=0) -> A
 
 
 def create_request_message(
-    message_id: str,
-    user_id: str,
-    report_name: str,
-    start_timestamp: str,
-    end_timestamp: str,
-    date_range_days: str,
+        message_id: str,
+        user_id: str,
+        report_name: str,
+        start_timestamp: str,
+        end_timestamp: str,
+        date_range_days: str,
 ):
     return {
         "Id": message_id,
@@ -290,6 +290,9 @@ def assert_job_message(actual_result: Any, expected_result: Any):
 
 
 def assert_job_messages(actual_result: Any, expected_result: Any):
+    log.info(f"actual_result length:{len(actual_result)}")
+    log.info(f"expected_result length:{len(expected_result)}")
+
     assert len(actual_result) == len(expected_result)
     index = 0
 

@@ -7,16 +7,16 @@ from typing import Any
 import boto3
 from botocore.exceptions import ClientError
 
-from util.service_util import (
-    get_date_range_days,
-    create_report_timestamp,
-    create_job_message,
-)
 from ..config import (
     THINGS_REPORT_REQUEST_QUEUE,
     THINGS_REPORT_JOB_QUEUE,
     AWS_DEFAULT_REGION,
     THINGS_REPORT_REQUEST_DLQ,
+)
+from ..util.service_util import (
+    get_date_range_days,
+    create_report_timestamp,
+    create_job_message,
 )
 
 log = logging.getLogger("things_report_request_service")

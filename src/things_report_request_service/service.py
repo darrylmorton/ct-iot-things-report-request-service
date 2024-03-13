@@ -7,11 +7,16 @@ from typing import Any
 import boto3
 from botocore.exceptions import ClientError
 
-from config import THINGS_REPORT_REQUEST_QUEUE, THINGS_REPORT_JOB_QUEUE, AWS_DEFAULT_REGION, THINGS_REPORT_REQUEST_DLQ
+from config import (
+    THINGS_REPORT_REQUEST_QUEUE,
+    THINGS_REPORT_JOB_QUEUE,
+    AWS_DEFAULT_REGION,
+    THINGS_REPORT_REQUEST_DLQ,
+)
 from util.service_util import (
     get_date_range_days,
     create_report_timestamp,
-    create_job_message
+    create_job_message,
 )
 
 log = logging.getLogger("things_report_request_service")
@@ -20,7 +25,9 @@ log = logging.getLogger("things_report_request_service")
 class ThingsReportRequestService:
     def __init__(self):
         self.sqs = boto3.resource("sqs", region_name=AWS_DEFAULT_REGION)
-        self.report_request_queue = self.sqs.Queue(f"{THINGS_REPORT_REQUEST_QUEUE}.fifo")
+        self.report_request_queue = self.sqs.Queue(
+            f"{THINGS_REPORT_REQUEST_QUEUE}.fifo"
+        )
         self.report_request_dlq = self.sqs.Queue(f"{THINGS_REPORT_REQUEST_DLQ}.fifo")
         self.report_job_queue = self.sqs.Queue(f"{THINGS_REPORT_JOB_QUEUE}.fifo")
 
@@ -47,7 +54,9 @@ class ThingsReportRequestService:
                     end_timestamp_iso = message_body["EndTimestamp"]
                     end_timestamp = create_report_timestamp(end_timestamp_iso)
 
-                    date_range_days = get_date_range_days(start_timestamp, end_timestamp)
+                    date_range_days = get_date_range_days(
+                        start_timestamp, end_timestamp
+                    )
                     total_jobs = date_range_days + 1
 
                     date_range_days_countdown = total_jobs
@@ -57,8 +66,12 @@ class ThingsReportRequestService:
 
                         datetime_delta = datetime.timedelta(days=index)
 
-                        job_start_date = date.replace(hour=0, minute=0, second=0) + datetime_delta
-                        job_end_date = date.replace(hour=23, minute=59, second=59) + datetime_delta
+                        job_start_date = (
+                            date.replace(hour=0, minute=0, second=0) + datetime_delta
+                        )
+                        job_end_date = (
+                            date.replace(hour=23, minute=59, second=59) + datetime_delta
+                        )
 
                         message_id = uuid.uuid4()
 
@@ -72,7 +85,7 @@ class ThingsReportRequestService:
                             end_timestamp=job_end_date.isoformat(),
                             job_index=str(index),
                             total_jobs=str(total_jobs),
-                            archive_report=str(archive_report)
+                            archive_report=str(archive_report),
                         )
 
                         job_messages.append(job_message)
@@ -87,7 +100,9 @@ class ThingsReportRequestService:
                         date_range_days_countdown = date_range_days_countdown - 1
 
         except ClientError as error:
-            log.error(f"Couldn't receive report_request_queue messages client error {error}")
+            log.error(
+                f"Couldn't receive report_request_queue messages client error {error}"
+            )
             raise error
 
     def produce(self, job_messages: Any) -> Any:

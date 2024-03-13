@@ -2,8 +2,8 @@ import logging
 
 from moto import mock_sqs
 
-from config import THINGS_REPORT_REQUEST_QUEUE, THINGS_REPORT_JOB_QUEUE
-from things_report_request_service.service import ThingsReportRequestService
+from src.config import THINGS_REPORT_REQUEST_QUEUE, THINGS_REPORT_JOB_QUEUE
+from src.things_report_request_service.service import ThingsReportRequestService
 from ..helper.request_helper import (
     create_request_messages,
     service_poll,

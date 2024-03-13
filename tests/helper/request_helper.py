@@ -82,12 +82,12 @@ def report_request_dlq_consumer(report_request_dlq: Any, timeout_seconds=0) -> A
 
 
 def create_request_message(
-        message_id: str,
-        user_id: str,
-        report_name: str,
-        start_timestamp: str,
-        end_timestamp: str,
-        date_range_days: str,
+    message_id: str,
+    user_id: str,
+    report_name: str,
+    start_timestamp: str,
+    end_timestamp: str,
+    date_range_days: str,
 ):
     return {
         "Id": message_id,

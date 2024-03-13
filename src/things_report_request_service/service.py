@@ -7,16 +7,16 @@ from typing import Any
 import boto3
 from botocore.exceptions import ClientError
 
-from config import (
-    THINGS_REPORT_REQUEST_QUEUE,
-    THINGS_REPORT_JOB_QUEUE,
-    AWS_DEFAULT_REGION,
-    THINGS_REPORT_REQUEST_DLQ,
-)
 from util.service_util import (
     get_date_range_days,
     create_report_timestamp,
     create_job_message,
+)
+from ..config import (
+    THINGS_REPORT_REQUEST_QUEUE,
+    THINGS_REPORT_JOB_QUEUE,
+    AWS_DEFAULT_REGION,
+    THINGS_REPORT_REQUEST_DLQ,
 )
 
 log = logging.getLogger("things_report_request_service")
@@ -67,10 +67,10 @@ class ThingsReportRequestService:
                         datetime_delta = datetime.timedelta(days=index)
 
                         job_start_date = (
-                            date.replace(hour=0, minute=0, second=0) + datetime_delta
+                                date.replace(hour=0, minute=0, second=0) + datetime_delta
                         )
                         job_end_date = (
-                            date.replace(hour=23, minute=59, second=59) + datetime_delta
+                                date.replace(hour=23, minute=59, second=59) + datetime_delta
                         )
 
                         message_id = uuid.uuid4()

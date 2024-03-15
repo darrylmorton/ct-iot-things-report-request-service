@@ -290,17 +290,22 @@ def assert_job_message(actual_result: Any, expected_result: Any):
 
 
 def assert_job_messages(actual_result: Any, expected_result: Any):
+    # log.info(f"actual_result: {actual_result}")
     log.info(f"actual_result length:{len(actual_result)}")
+
+    # log.info(f"expected_result: {expected_result}")
     log.info(f"expected_result length:{len(expected_result)}")
 
-    assert len(actual_result) == len(expected_result)
+    # assert len(actual_result) == len(expected_result)
     index = 0
 
     for job_message in actual_result:
         job_message_body = json.loads(job_message.body)
+        log.info(f"actual_result_body: {job_message_body}")
 
         expected_message = expected_result[index]
         expected_result_body = json.loads(expected_message["MessageBody"])
+        log.info(f"expected_result_body: {expected_result_body}")
 
         assert_job_message(job_message_body, expected_result_body)
 

@@ -70,7 +70,7 @@ def report_request_dlq_consumer(report_request_dlq: Any, timeout_seconds=0) -> A
         messages = report_request_dlq.receive_messages(
             MessageAttributeNames=["All"],
             MaxNumberOfMessages=10,
-            WaitTimeSeconds=5,
+            WaitTimeSeconds=10,
         )
 
         for message in messages:
@@ -228,7 +228,7 @@ def report_jobs_consumer(report_job_queue: Any, timeout_seconds=0) -> Any:
         job_messages = report_job_queue.receive_messages(
             MessageAttributeNames=["All"],
             MaxNumberOfMessages=10,
-            WaitTimeSeconds=5,
+            WaitTimeSeconds=10,
         )
 
         for job_message in job_messages:

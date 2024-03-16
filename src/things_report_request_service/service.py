@@ -47,6 +47,7 @@ class ThingsReportRequestService:
 
                 for request_message in request_messages:
                     message_body = json.loads(request_message.body)
+
                     request_message.delete()
 
                     start_timestamp_iso = message_body["StartTimestamp"]
@@ -68,10 +69,10 @@ class ThingsReportRequestService:
                         datetime_delta = datetime.timedelta(days=index)
 
                         job_start_date = (
-                            date.replace(hour=0, minute=0, second=0) + datetime_delta
+                                date.replace(hour=0, minute=0, second=0) + datetime_delta
                         )
                         job_end_date = (
-                            date.replace(hour=23, minute=59, second=59) + datetime_delta
+                                date.replace(hour=23, minute=59, second=59) + datetime_delta
                         )
 
                         message_id = uuid.uuid4()
@@ -109,8 +110,6 @@ class ThingsReportRequestService:
     def produce(self, job_messages: Any) -> Any:
         try:
             if len(job_messages) > 0:
-                log.info(f"produce - job_messages {job_messages}")
-
                 self.report_job_queue.send_messages(Entries=job_messages)
 
             return job_messages

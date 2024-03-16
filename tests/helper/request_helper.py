@@ -85,12 +85,12 @@ def create_timestamp(days: int = 0, before: bool = False) -> datetime:
 
 
 def create_request_message(
-        message_id: str,
-        user_id: str,
-        report_name: str,
-        start_timestamp: str,
-        end_timestamp: str,
-        date_range_days: str,
+    message_id: str,
+    user_id: str,
+    report_name: str,
+    start_timestamp: str,
+    end_timestamp: str,
+    date_range_days: str,
 ):
     return {
         "Id": message_id,

@@ -69,10 +69,10 @@ class ThingsReportRequestService:
                         datetime_delta = datetime.timedelta(days=index)
 
                         job_start_date = (
-                                date.replace(hour=0, minute=0, second=0) + datetime_delta
+                            date.replace(hour=0, minute=0, second=0) + datetime_delta
                         )
                         job_end_date = (
-                                date.replace(hour=23, minute=59, second=59) + datetime_delta
+                            date.replace(hour=23, minute=59, second=59) + datetime_delta
                         )
 
                         message_id = uuid.uuid4()

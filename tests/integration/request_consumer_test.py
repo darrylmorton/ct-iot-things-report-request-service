@@ -32,26 +32,6 @@ class TestRequestService:
         service_poll(request_service, 5)
 
         actual_job_messages_batch_one = report_jobs_consumer(report_job_queue, 20)
-        # timeout_seconds = 20
-        # timeout = time.time() + timeout_seconds
-        # actual_job_messages_batch_one = []
-        #
-        # while True:
-        #     if time.time() > timeout:
-        #         log.info(f"Task timed out after {timeout_seconds}")
-        #         break
-        #
-        #     job_messages = report_job_queue.receive_messages(
-        #         MessageAttributeNames=["All"],
-        #         MaxNumberOfMessages=10,
-        #         # WaitTimeSeconds=WAIT_SECONDS,
-        #     )
-        #
-        #     for job_message in job_messages:
-        #         actual_job_messages_batch_one.append(job_message)
-        #
-        #         job_message.delete()
-
         assert_job_messages(
             actual_job_messages_batch_one, expected_job_message_batch_one
         )

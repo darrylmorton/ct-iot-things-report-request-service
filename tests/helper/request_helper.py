@@ -56,38 +56,38 @@ def create_timestamp(days: int = 0, before: bool = False) -> datetime:
         return timestamp + delta
 
 
-def report_request_dlq_consumer(report_request_dlq: Any, timeout_seconds=0) -> Any:
-    timeout = time.time() + timeout_seconds
-    messages = []
-
-    while True:
-        if time.time() > timeout:
-            log.info(f"Task timed out after {timeout_seconds}")
-            break
-
-        log.info(f"report_request_dlq: {report_request_dlq}")
-
-        messages = report_request_dlq.receive_messages(
-            MessageAttributeNames=["All"],
-            MaxNumberOfMessages=10,
-            WaitTimeSeconds=10,
-        )
-
-        for message in messages:
-            messages.append(message)
-
-            message.delete()
-
-    return messages
+# def report_request_dlq_consumer(report_request_dlq: Any, timeout_seconds=0) -> Any:
+#     timeout = time.time() + timeout_seconds
+#     messages = []
+#
+#     while True:
+#         if time.time() > timeout:
+#             log.info(f"Task timed out after {timeout_seconds}")
+#             break
+#
+#         log.info(f"report_request_dlq: {report_request_dlq}")
+#
+#         messages = report_request_dlq.receive_messages(
+#             MessageAttributeNames=["All"],
+#             MaxNumberOfMessages=10,
+#             WaitTimeSeconds=10,
+#         )
+#
+#         for message in messages:
+#             messages.append(message)
+#
+#             message.delete()
+#
+#     return messages
 
 
 def create_request_message(
-        message_id: str,
-        user_id: str,
-        report_name: str,
-        start_timestamp: str,
-        end_timestamp: str,
-        date_range_days: str,
+    message_id: str,
+    user_id: str,
+    report_name: str,
+    start_timestamp: str,
+    end_timestamp: str,
+    date_range_days: str,
 ):
     return {
         "Id": message_id,

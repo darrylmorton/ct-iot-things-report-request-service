@@ -11,7 +11,6 @@ from ..config import (
     THINGS_REPORT_REQUEST_QUEUE,
     THINGS_REPORT_JOB_QUEUE,
     AWS_DEFAULT_REGION,
-    THINGS_REPORT_REQUEST_DLQ,
 )
 from ..util.service_util import (
     get_date_range_days,
@@ -28,7 +27,7 @@ class ThingsReportRequestService:
         self.report_request_queue = self.sqs.Queue(
             f"{THINGS_REPORT_REQUEST_QUEUE}.fifo"
         )
-        self.report_request_dlq = self.sqs.Queue(f"{THINGS_REPORT_REQUEST_DLQ}.fifo")
+        # self.report_request_dlq = self.sqs.Queue(f"{THINGS_REPORT_REQUEST_DLQ}.fifo")
         self.report_job_queue = self.sqs.Queue(f"{THINGS_REPORT_JOB_QUEUE}.fifo")
 
     def poll(self):

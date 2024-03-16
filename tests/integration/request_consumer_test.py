@@ -29,9 +29,9 @@ class TestRequestService:
         )
 
         report_request_queue.send_messages(Entries=expected_message_batch_one)
-        service_poll(request_service, 30)
+        service_poll(request_service, 10)
 
-        actual_job_messages_batch_one = report_jobs_consumer(report_job_queue, 40)
+        actual_job_messages_batch_one = report_jobs_consumer(report_job_queue, 10)
 
         assert_job_messages(
             actual_job_messages_batch_one, expected_job_message_batch_one

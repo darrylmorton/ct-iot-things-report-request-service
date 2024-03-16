@@ -12,6 +12,7 @@ from ..config import (
     THINGS_REPORT_JOB_QUEUE,
     AWS_DEFAULT_REGION,
 )
+from ..constants import WAIT_SECONDS
 from ..util.service_util import (
     get_date_range_days,
     create_report_timestamp,
@@ -39,7 +40,7 @@ class ThingsReportRequestService:
             request_messages = self.report_request_queue.receive_messages(
                 MessageAttributeNames=["All"],
                 MaxNumberOfMessages=10,
-                WaitTimeSeconds=20,
+                WaitTimeSeconds=WAIT_SECONDS,
             )
 
             if len(request_messages) > 0:

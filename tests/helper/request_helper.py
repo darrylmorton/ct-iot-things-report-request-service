@@ -17,19 +17,22 @@ from src.util.service_util import (
 
 log = logging.getLogger("test_things_report_request_service")
 
+DELAY_SECONDS = 10
+WAIT_SECONDS = 10
+
 
 def create_sqs_queue(queue_name: str, dlq_name=""):
     log.info(f"create_sqs_queue - dlq_name {dlq_name}")
 
     sqs = boto3.resource("sqs", region_name=AWS_DEFAULT_REGION)
-    queue_attributes = {
-        "DelaySeconds": "20",
-    }
+    # queue_attributes = {
+    #     "DelaySeconds": f"{DELAY_SECONDS}",
+    # }
     dlq = None
 
     if dlq_name:
         dlq = sqs.create_queue(
-            QueueName=f"{dlq_name}.fifo", Attributes=queue_attributes
+            QueueName=f"{dlq_name}.fifo"  # , Attributes=queue_attributes
         )
 
         dlq_policy = json.dumps({
@@ -37,10 +40,10 @@ def create_sqs_queue(queue_name: str, dlq_name=""):
             "maxReceiveCount": "10",
         })
 
-        queue_attributes["RedrivePolicy"] = dlq_policy
+        # queue_attributes["RedrivePolicy"] = dlq_policy
 
     queue = sqs.create_queue(
-        QueueName=f"{queue_name}.fifo", Attributes=queue_attributes
+        QueueName=f"{queue_name}.fifo"  # , Attributes=queue_attributes
     )
 
     return queue, dlq
@@ -228,7 +231,7 @@ def report_jobs_consumer(report_job_queue: Any, timeout_seconds=0) -> Any:
         job_messages = report_job_queue.receive_messages(
             MessageAttributeNames=["All"],
             MaxNumberOfMessages=10,
-            WaitTimeSeconds=20,
+            WaitTimeSeconds=WAIT_SECONDS,
         )
 
         for job_message in job_messages:
@@ -296,7 +299,7 @@ def assert_job_messages(actual_result: Any, expected_result: Any):
     # log.info(f"expected_result: {expected_result}")
     log.info(f"expected_result length:{len(expected_result)}")
 
-    # assert len(actual_result) == len(expected_result)
+    assert len(actual_result) == len(expected_result)
     index = 0
 
     for job_message in actual_result:

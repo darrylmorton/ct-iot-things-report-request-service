@@ -18,7 +18,7 @@ from src.util.service_util import (
 log = logging.getLogger("test_things_report_request_service")
 
 # DELAY_SECONDS = 10
-WAIT_SECONDS = 1
+WAIT_SECONDS = 5
 
 
 def create_sqs_queue(queue_name: str, dlq_name=""):
@@ -85,12 +85,12 @@ def create_timestamp(days: int = 0, before: bool = False) -> datetime:
 
 
 def create_request_message(
-    message_id: str,
-    user_id: str,
-    report_name: str,
-    start_timestamp: str,
-    end_timestamp: str,
-    date_range_days: str,
+        message_id: str,
+        user_id: str,
+        report_name: str,
+        start_timestamp: str,
+        end_timestamp: str,
+        date_range_days: str,
 ):
     return {
         "Id": message_id,

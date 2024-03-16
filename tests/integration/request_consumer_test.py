@@ -32,7 +32,7 @@ class TestRequestService:
         service_poll(request_service, 5)
 
         # actual_job_messages_batch_one = report_jobs_consumer(report_job_queue, 5)
-        timeout_seconds = 15
+        timeout_seconds = 20
         timeout = time.time() + timeout_seconds
         actual_job_messages_batch_one = []
 

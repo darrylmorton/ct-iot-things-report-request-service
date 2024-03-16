@@ -30,17 +30,17 @@ def create_sqs_queue(queue_name: str, dlq_name=""):
     # }
     dlq = None
 
-    if dlq_name:
-        dlq = sqs.create_queue(
-            QueueName=f"{dlq_name}.fifo"  # , Attributes=queue_attributes
-        )
+    # if dlq_name:
+    #     dlq = sqs.create_queue(
+    #         QueueName=f"{dlq_name}.fifo"  # , Attributes=queue_attributes
+    #     )
 
-        dlq_policy = json.dumps({
-            "deadLetterTargetArn": dlq.attributes["QueueArn"],
-            "maxReceiveCount": "10",
-        })
+    # dlq_policy = json.dumps({
+    #     "deadLetterTargetArn": dlq.attributes["QueueArn"],
+    #     "maxReceiveCount": "10",
+    # })
 
-        # queue_attributes["RedrivePolicy"] = dlq_policy
+    # queue_attributes["RedrivePolicy"] = dlq_policy
 
     queue = sqs.create_queue(
         QueueName=f"{queue_name}.fifo"  # , Attributes=queue_attributes
@@ -231,7 +231,7 @@ def report_jobs_consumer(report_job_queue: Any, timeout_seconds=0) -> Any:
         job_messages = report_job_queue.receive_messages(
             MessageAttributeNames=["All"],
             MaxNumberOfMessages=10,
-            WaitTimeSeconds=WAIT_SECONDS,
+            # WaitTimeSeconds=WAIT_SECONDS,
         )
 
         for job_message in job_messages:

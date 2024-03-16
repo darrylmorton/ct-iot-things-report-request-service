@@ -23,7 +23,7 @@ def create_sqs_queue(queue_name: str, dlq_name=""):
 
     sqs = boto3.resource("sqs", region_name=AWS_DEFAULT_REGION)
     queue_attributes = {
-        "DelaySeconds": "10",
+        "DelaySeconds": "20",
     }
     dlq = None
 
@@ -228,7 +228,7 @@ def report_jobs_consumer(report_job_queue: Any, timeout_seconds=0) -> Any:
         job_messages = report_job_queue.receive_messages(
             MessageAttributeNames=["All"],
             MaxNumberOfMessages=10,
-            WaitTimeSeconds=10,
+            WaitTimeSeconds=20,
         )
 
         for job_message in job_messages:

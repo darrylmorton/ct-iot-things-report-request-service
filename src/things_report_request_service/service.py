@@ -47,6 +47,7 @@ class ThingsReportRequestService:
 
                 for request_message in request_messages:
                     message_body = json.loads(request_message.body)
+                    request_message.delete()
 
                     start_timestamp_iso = message_body["StartTimestamp"]
                     start_timestamp = create_report_timestamp(start_timestamp_iso)
@@ -60,6 +61,7 @@ class ThingsReportRequestService:
 
                     date_range_days_countdown = total_jobs
                     counter = 1
+
                     for index in range(total_jobs):
                         date = create_report_timestamp(start_timestamp_iso)
 

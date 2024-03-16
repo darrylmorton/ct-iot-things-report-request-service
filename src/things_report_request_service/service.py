@@ -107,6 +107,8 @@ class ThingsReportRequestService:
     def produce(self, job_messages: Any) -> Any:
         try:
             if len(job_messages) > 0:
+                log.info(f"produce - job_messages {job_messages}")
+
                 self.report_job_queue.send_messages(Entries=job_messages)
 
             return job_messages

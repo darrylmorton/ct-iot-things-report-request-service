@@ -17,8 +17,8 @@ from src.util.service_util import (
 
 log = logging.getLogger("test_things_report_request_service")
 
-DELAY_SECONDS = 10
-WAIT_SECONDS = 10
+# DELAY_SECONDS = 10
+WAIT_SECONDS = 1
 
 
 def create_sqs_queue(queue_name: str, dlq_name=""):

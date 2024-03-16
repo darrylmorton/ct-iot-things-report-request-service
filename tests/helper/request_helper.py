@@ -7,11 +7,17 @@ from typing import Any
 
 import boto3
 
-from config import AWS_DEFAULT_REGION
-from things_report_request_service.service import ThingsReportRequestService
-from util.service_util import create_report_timestamp, get_date_range_days, create_job_message
+from src.config import AWS_DEFAULT_REGION
+from src.things_report_request_service.service import ThingsReportRequestService
+from src.util.service_util import (
+    create_report_timestamp,
+    get_date_range_days,
+    create_job_message,
+)
 
 log = logging.getLogger("test_things_report_request_service")
+
+WAIT_SECONDS = 5
 
 
 def create_sqs_queue(queue_name: str, dlq_name=""):
@@ -19,26 +25,24 @@ def create_sqs_queue(queue_name: str, dlq_name=""):
 
     sqs = boto3.resource("sqs", region_name=AWS_DEFAULT_REGION)
     queue_attributes = {
-        "DelaySeconds": "5",
+        "WaitSeconds": f"{WAIT_SECONDS}",
     }
     dlq = None
 
     if dlq_name:
         dlq = sqs.create_queue(
-            QueueName=f"{dlq_name}.fifo",
-            Attributes=queue_attributes
+            QueueName=f"{dlq_name}.fifo", Attributes=queue_attributes
         )
 
         dlq_policy = json.dumps({
             "deadLetterTargetArn": dlq.attributes["QueueArn"],
-            "maxReceiveCount": "10"
+            "maxReceiveCount": "10",
         })
 
         queue_attributes["RedrivePolicy"] = dlq_policy
 
     queue = sqs.create_queue(
-        QueueName=f"{queue_name}.fifo",
-        Attributes=queue_attributes
+        QueueName=f"{queue_name}.fifo", Attributes=queue_attributes
     )
 
     return queue, dlq
@@ -68,7 +72,7 @@ def report_request_dlq_consumer(report_request_dlq: Any, timeout_seconds=0) -> A
         messages = report_request_dlq.receive_messages(
             MessageAttributeNames=["All"],
             MaxNumberOfMessages=10,
-            WaitTimeSeconds=5,
+            WaitTimeSeconds=WAIT_SECONDS,
         )
 
         for message in messages:
@@ -80,12 +84,12 @@ def report_request_dlq_consumer(report_request_dlq: Any, timeout_seconds=0) -> A
 
 
 def create_request_message(
-        message_id: str,
-        user_id: str,
-        report_name: str,
-        start_timestamp: str,
-        end_timestamp: str,
-        date_range_days: str
+    message_id: str,
+    user_id: str,
+    report_name: str,
+    start_timestamp: str,
+    end_timestamp: str,
+    date_range_days: str,
 ):
     return {
         "Id": message_id,
@@ -113,7 +117,7 @@ def create_request_message(
             "DateRangeDays": {
                 "DataType": "String",
                 "StringValue": date_range_days,
-            }
+            },
         },
         "MessageBody": json.dumps({
             "Id": message_id,
@@ -153,7 +157,7 @@ def create_request_messages(total: int, offset=0):
             report_name=f"report_name_{index}",
             start_timestamp=start_timestamp_isoformat,
             end_timestamp=end_timestamp_isoformat,
-            date_range_days=str(date_range_days)
+            date_range_days=str(date_range_days),
         )
         messages.append(request_message)
 
@@ -195,7 +199,7 @@ def expected_job_messages(messages: Any):
                 end_timestamp=job_end_date.isoformat(),
                 job_index=str(index),
                 total_jobs=str(total_jobs),
-                archive_report=str(archive_report)
+                archive_report=str(archive_report),
             )
 
             job_messages.append(job_message)
@@ -226,7 +230,7 @@ def report_jobs_consumer(report_job_queue: Any, timeout_seconds=0) -> Any:
         job_messages = report_job_queue.receive_messages(
             MessageAttributeNames=["All"],
             MaxNumberOfMessages=10,
-            WaitTimeSeconds=5,
+            WaitTimeSeconds=WAIT_SECONDS,
         )
 
         for job_message in job_messages:

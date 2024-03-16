@@ -2,7 +2,11 @@ import logging
 
 from moto import mock_sqs
 
-from src.config import THINGS_REPORT_REQUEST_QUEUE, THINGS_REPORT_JOB_QUEUE
+from src.config import (
+    THINGS_REPORT_REQUEST_QUEUE,
+    THINGS_REPORT_JOB_QUEUE,
+    THINGS_REPORT_REQUEST_DLQ,
+)
 from src.things_report_request_service.service import ThingsReportRequestService
 from ..helper.request_helper import (
     create_request_messages,
@@ -20,7 +24,10 @@ class TestRequestService:
     @mock_sqs
     def test_request_consumer(self):
         request_service = ThingsReportRequestService()
-        report_request_queue, _ = create_sqs_queue(THINGS_REPORT_REQUEST_QUEUE)
+
+        report_request_queue, report_request_dlq = create_sqs_queue(
+            THINGS_REPORT_REQUEST_QUEUE, THINGS_REPORT_REQUEST_DLQ
+        )
         report_job_queue, _ = create_sqs_queue(THINGS_REPORT_JOB_QUEUE)
 
         expected_message_batch_one = create_request_messages(1)

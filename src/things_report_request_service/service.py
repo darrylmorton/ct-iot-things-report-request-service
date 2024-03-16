@@ -11,6 +11,7 @@ from ..config import (
     THINGS_REPORT_REQUEST_QUEUE,
     THINGS_REPORT_JOB_QUEUE,
     AWS_DEFAULT_REGION,
+    THINGS_REPORT_REQUEST_DLQ,
 )
 from ..constants import WAIT_SECONDS
 from ..util.service_util import (
@@ -28,7 +29,7 @@ class ThingsReportRequestService:
         self.report_request_queue = self.sqs.Queue(
             f"{THINGS_REPORT_REQUEST_QUEUE}.fifo"
         )
-        # self.report_request_dlq = self.sqs.Queue(f"{THINGS_REPORT_REQUEST_DLQ}.fifo")
+        self.report_request_dlq = self.sqs.Queue(f"{THINGS_REPORT_REQUEST_DLQ}.fifo")
         self.report_job_queue = self.sqs.Queue(f"{THINGS_REPORT_JOB_QUEUE}.fifo")
 
     def poll(self):
@@ -70,10 +71,10 @@ class ThingsReportRequestService:
                         datetime_delta = datetime.timedelta(days=index)
 
                         job_start_date = (
-                                date.replace(hour=0, minute=0, second=0) + datetime_delta
+                            date.replace(hour=0, minute=0, second=0) + datetime_delta
                         )
                         job_end_date = (
-                                date.replace(hour=23, minute=59, second=59) + datetime_delta
+                            date.replace(hour=23, minute=59, second=59) + datetime_delta
                         )
 
                         message_id = uuid.uuid4()

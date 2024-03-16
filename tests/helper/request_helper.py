@@ -17,7 +17,7 @@ from src.util.service_util import (
 
 log = logging.getLogger("test_things_report_request_service")
 
-# DELAY_SECONDS = 10
+DELAY_SECONDS = 5
 WAIT_SECONDS = 5
 
 
@@ -25,25 +25,26 @@ def create_sqs_queue(queue_name: str, dlq_name=""):
     log.info(f"create_sqs_queue - dlq_name {dlq_name}")
 
     sqs = boto3.resource("sqs", region_name=AWS_DEFAULT_REGION)
-    # queue_attributes = {
-    #     "DelaySeconds": f"{DELAY_SECONDS}",
-    # }
+    queue_attributes = {
+        # "DelaySeconds": f"{DELAY_SECONDS}",
+        "WaitSeconds": f"{WAIT_SECONDS}",
+    }
     dlq = None
 
-    # if dlq_name:
-    #     dlq = sqs.create_queue(
-    #         QueueName=f"{dlq_name}.fifo"  # , Attributes=queue_attributes
-    #     )
+    if dlq_name:
+        dlq = sqs.create_queue(
+            QueueName=f"{dlq_name}.fifo", Attributes=queue_attributes
+        )
 
-    # dlq_policy = json.dumps({
-    #     "deadLetterTargetArn": dlq.attributes["QueueArn"],
-    #     "maxReceiveCount": "10",
-    # })
+        dlq_policy = json.dumps({
+            "deadLetterTargetArn": dlq.attributes["QueueArn"],
+            "maxReceiveCount": "10",
+        })
 
-    # queue_attributes["RedrivePolicy"] = dlq_policy
+        queue_attributes["RedrivePolicy"] = dlq_policy
 
     queue = sqs.create_queue(
-        QueueName=f"{queue_name}.fifo"  # , Attributes=queue_attributes
+        QueueName=f"{queue_name}.fifo", Attributes=queue_attributes
     )
 
     return queue, dlq
@@ -59,38 +60,38 @@ def create_timestamp(days: int = 0, before: bool = False) -> datetime:
         return timestamp + delta
 
 
-# def report_request_dlq_consumer(report_request_dlq: Any, timeout_seconds=0) -> Any:
-#     timeout = time.time() + timeout_seconds
-#     messages = []
-#
-#     while True:
-#         if time.time() > timeout:
-#             log.info(f"Task timed out after {timeout_seconds}")
-#             break
-#
-#         log.info(f"report_request_dlq: {report_request_dlq}")
-#
-#         messages = report_request_dlq.receive_messages(
-#             MessageAttributeNames=["All"],
-#             MaxNumberOfMessages=10,
-#             WaitTimeSeconds=10,
-#         )
-#
-#         for message in messages:
-#             messages.append(message)
-#
-#             message.delete()
-#
-#     return messages
+def report_request_dlq_consumer(report_request_dlq: Any, timeout_seconds=0) -> Any:
+    timeout = time.time() + timeout_seconds
+    messages = []
+
+    while True:
+        if time.time() > timeout:
+            log.info(f"Task timed out after {timeout_seconds}")
+            break
+
+        log.info(f"report_request_dlq: {report_request_dlq}")
+
+        messages = report_request_dlq.receive_messages(
+            MessageAttributeNames=["All"],
+            MaxNumberOfMessages=10,
+            WaitTimeSeconds=WAIT_SECONDS,
+        )
+
+        for message in messages:
+            messages.append(message)
+
+            message.delete()
+
+    return messages
 
 
 def create_request_message(
-        message_id: str,
-        user_id: str,
-        report_name: str,
-        start_timestamp: str,
-        end_timestamp: str,
-        date_range_days: str,
+    message_id: str,
+    user_id: str,
+    report_name: str,
+    start_timestamp: str,
+    end_timestamp: str,
+    date_range_days: str,
 ):
     return {
         "Id": message_id,

@@ -23,7 +23,7 @@ def create_sqs_queue(queue_name: str, dlq_name=""):
 
     sqs = boto3.resource("sqs", region_name=AWS_DEFAULT_REGION)
     queue_attributes = {
-        "DelaySeconds": "5",
+        "DelaySeconds": "10",
     }
     dlq = None
 

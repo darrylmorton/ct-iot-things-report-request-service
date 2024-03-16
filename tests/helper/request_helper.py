@@ -17,7 +17,6 @@ from src.util.service_util import (
 
 log = logging.getLogger("test_things_report_request_service")
 
-DELAY_SECONDS = 5
 WAIT_SECONDS = 5
 
 
@@ -26,7 +25,6 @@ def create_sqs_queue(queue_name: str, dlq_name=""):
 
     sqs = boto3.resource("sqs", region_name=AWS_DEFAULT_REGION)
     queue_attributes = {
-        # "DelaySeconds": f"{DELAY_SECONDS}",
         "WaitSeconds": f"{WAIT_SECONDS}",
     }
     dlq = None

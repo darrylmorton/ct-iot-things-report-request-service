@@ -1,5 +1,6 @@
 import logging
 
+import pytest
 from moto import mock_sqs
 
 from src.config import (
@@ -42,3 +43,8 @@ class TestRequestService:
         assert_job_messages(
             actual_job_messages_batch_one, expected_job_message_batch_one
         )
+
+    @mock_sqs
+    @pytest.mark.skip
+    def test_request_consumer_dql(self):
+        pass
